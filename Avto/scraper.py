@@ -43,8 +43,8 @@ def get_information_about_cars(number):
                                                   tree.xpath('//span[@class="price_value bold"]/text()').extract_first()))
             information['mileage'] = tree.xpath('//div[@class="mb-10 bold dhide"]/text()').extract_first()
             information['username'] = tree.xpath('//h4[@class="seller_info_name bold"]/text()').extract_first()
-            information['phone_number'] = int(re.sub("[^0-9]", '', tree.xpath('//div[@class="phones_item "]'
-                                                                             '/span/@data-phone-number').extract_first()))
+            information['phone_number'] = int(re.sub("[^0-9]", '',
+                                                     tree.xpath('//span/@data-phone-number').extract_first()))
             information['img_url'] = tree.xpath('//img[@class="outline m-auto"]/@src').extract_first()
             information['img_total_count'] = int(re.sub("[^0-9]", '',
                                          tree.xpath('//span[@class="count"]/span[@class="dhide"]/text()').extract_first()))

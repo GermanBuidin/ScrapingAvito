@@ -56,8 +56,10 @@ def insert_car_info(number):
                     (i['title'], i['usd_price'], i['mileage'], i['username'], i['phone_number'], i['img_total_count'],
                     i['car_number'], i['car_vin_code'], i['img_url'], i['url']))
             con.commit()
-        except Exception:
+        except psycopg2.errors.NotNullViolation:
             print(f"Карточка по ссылке {i['url']} имеет недостающие данные")
+        except:
+            con.rollback()
     print("Record inserted successfully")
     con.close()
 
