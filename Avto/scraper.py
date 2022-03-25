@@ -4,6 +4,9 @@ from time import sleep
 from requests import request
 from parsel import Selector
 
+from constantes import INFORMATION, EXCEPT
+from log import logger
+
 
 class Scraper:
 
@@ -15,9 +18,8 @@ class Scraper:
         }
         self.url = 'https://auto.ria.com/uk/legkovie/?page='
 
-    def get_cars_links(self, number):
+    def get_cars_links(self, number: "int количество пагинации") -> "list список ссылок на карточки авто":
         all_links = []
-        print('Старт сбора информации по машинам в категории б/у, легковые на сайте avto.ria')
         for i in range(number):
             url = self.url + str(i+1)
             response = request(method='GET', url=url, headers=self.headers)
@@ -25,63 +27,52 @@ class Scraper:
             links = tree.xpath('//div[@class="content-bar"]/a/@href').extract()
             for link in links:
                 all_links.append(link)
-            print(f'созданы ссылки для результатов поиска на {i + 1} странице')
+            logger.debug(f'созданы ссылки для результатов поиска на {i + 1} странице')
             sleep(random.randrange(2, 4))
-        print('создание ссылок для работы с карточками по поиску б/у легковые машины завершено')
+        logger.debug('создание ссылок для работы с карточками по поиску б/у легковые машины завершено')
         return all_links
 
     @staticmethod
-    def converter_in_int(information: dict):
+    def converter_in_int(information: "dict информация про авто") -> "dict преобразованная в int":
         for key, value in information.items():
             if key == 'img_total_count' or key == 'phone_number' or key == 'usd_price':
-                if key:
-                    information[key] = int(re.sub("[^0-9]", '', value))
+                information[key] = int(re.sub("[^0-9]", '', value))
         return information
 
     @staticmethod
-    def execute(information: dict, tree):
+    def execute(information: "dict xpath query", tree: 'DOM карточки авто') -> "dict извлечение из xpath":
         converter_information = {}
         for key, value in information.items():
             converter_information[key] = tree.xpath(value).extract_first()
         return converter_information
 
     @staticmethod
-    def validator_none(information: dict):
+    def validator_none(information: "dict информация про авто") -> bool:
         result = True
         for key, value in information.items():
-            if key == 'car_number' or key == 'car_vin_code':
-                pass
-            else:
-                if value == None:
-                    result = False
-                    print("Карточка машины не содержит всех данных")
-                    break
+            if value is None and key not in EXCEPT:
+                result = False
+                logger.warning("Карточка машины не содержит всех данных")
+                break
         return result
 
-    def get_information_about_cars(self, number: 'количество страниц для поиска'):
+    def get_information_about_cars(self, number: 'количество пагинации') -> "list из диктов по каждому авто":
         links = Scraper.get_cars_links(self, number)
         cars = []
-        print('Начало работы с карточками машин')
+        logger.info('Начало работы с карточками машин')
         for number, link in enumerate(links):
-            response = request(method='GET', url=link, headers=self.headers)
-            tree = Selector(text=response.text)
-            information = Scraper.execute({
-                'title': '//h1[@class="head"]/text()',
-                'mileage': '//div[@class="mb-10 bold dhide"]/text()',
-                'username': '//h4[@class="seller_info_name bold"]/text()',
-                'img_url': '//img[@class="outline m-auto"]/@src',
-                'car_number': '//span[@class="state-num ua"]/text()',
-                'car_vin_code': '//span[@class="vin-code"]/text()',
-                'img_total_count': '//span[@class="count"]/span[@class="dhide"]/text()',
-                'phone_number': '//span/@data-phone-number',
-                'usd_price': '//span[@class="price_value bold"]/text()'
-            }, tree)
-            information['url'] = link
-            validation = Scraper.validator_none(information)
-            if validation:
-                information = Scraper.converter_in_int(information)
-                cars.append(information)
-                print(f" Завершена обработка {number + 1}-ой машины")
-                sleep(random.randrange(2, 4))
-        print(cars)
+            try:
+                response = request(method='GET', url=link, headers=self.headers)
+                tree = Selector(text=response.text)
+                information = Scraper.execute(INFORMATION, tree)
+                information['url'] = link
+                validation = Scraper.validator_none(information)
+                if validation:
+                    information = Scraper.converter_in_int(information)
+                    cars.append(information)
+                    logger.debug(f" Завершена обработка {number + 1}-ой машины")
+                    sleep(random.randrange(2, 4))
+            except Exception as err:
+                logger.exception(err)
+        logger.debug(cars)
         return cars

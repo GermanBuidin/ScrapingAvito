@@ -1,6 +1,8 @@
 import psycopg2
 import psycopg2.extras
+
 from scraper import Scraper
+from log import logger
 
 connection = psycopg2.connect(
   database="postgres",
@@ -10,7 +12,7 @@ connection = psycopg2.connect(
   port="5432"
 )
 
-print("Database opened successfully")
+logger.info("Database opened successfully")
 
 
 class ConnectDB:
@@ -32,28 +34,25 @@ class ConnectDB:
             DATETIME_FOUND TIMESTAMP DEFAULT NOW() );''')
 
     @staticmethod
-    def insert_car_info(number: 'количество страниц для поиска'):
-        with connection.cursor() as cursor:
-            ConnectDB.create_table(cursor)
-            info = Scraper()
-            car_info = info.get_information_about_cars(number)
-            psycopg2.extras.execute_batch(cursor, """ 
-                INSERT INTO OLD_CARS (URL, TITLE, USD_PRICE, MILEAGE, USERNAME, PHONE_NUMBER,
-                IMG_TOTAL_COUNT, CAR_NUMBER, CAR_VIN_CODE, IMG_URL ) 
-                VALUES (%(url)s, %(title)s, %(usd_price)s, %(mileage)s, %(username)s, %(phone_number)s,
-                %(img_total_count)s, %(car_number)s, %(car_vin_code)s, %(img_url)s)
-                ON CONFLICT (URL) 
-                DO NOTHING
-                """, car_info)
-            connection.commit()
-            print("Record inserted successfully")
+    def insert_car_info(number: 'количество пагинации') -> " Сохраниение в БД":
+        try:
+            with connection.cursor() as cursor:
+                ConnectDB.create_table(cursor)
+                info = Scraper()
+                car_info = info.get_information_about_cars(number)
+                psycopg2.extras.execute_batch(cursor, """ 
+                    INSERT INTO OLD_CARS (URL, TITLE, USD_PRICE, MILEAGE, USERNAME, PHONE_NUMBER,
+                    IMG_TOTAL_COUNT, CAR_NUMBER, CAR_VIN_CODE, IMG_URL ) 
+                    VALUES (%(url)s, %(title)s, %(usd_price)s, %(mileage)s, %(username)s, %(phone_number)s,
+                    %(img_total_count)s, %(car_number)s, %(car_vin_code)s, %(img_url)s)
+                    ON CONFLICT (URL) 
+                    DO NOTHING
+                    """, car_info)
+                connection.commit()
+                logger.info("Record inserted successfully")
+        except Exception as err:
+            logger.exception(err)
 
 
 if __name__ == '__main__':
     ConnectDB.insert_car_info(int(input('введите количество страниц поиска: ')))
-
-
-
-
-
-
