@@ -27,9 +27,9 @@ class Scraper:
             links = tree.xpath('//div[@class="content-bar"]/a/@href').extract()
             for link in links:
                 all_links.append(link)
-            logger.debug(f'созданы ссылки для результатов поиска на {i + 1} странице')
+            logger.info(f'созданы ссылки для результатов поиска на {i + 1} странице')
             sleep(random.randrange(2, 4))
-        logger.debug('создание ссылок для работы с карточками по поиску б/у легковые машины завершено')
+        logger.info('создание ссылок для работы с карточками по поиску б/у легковые машины завершено')
         return all_links
 
     @staticmethod
@@ -70,9 +70,9 @@ class Scraper:
                 if validation:
                     information = Scraper.converter_in_int(information)
                     cars.append(information)
-                    logger.debug(f" Завершена обработка {number + 1}-ой машины")
+                    logger.info(f" Завершена обработка {number + 1}-ой машины")
                     sleep(random.randrange(2, 4))
             except Exception as err:
                 logger.exception(err)
-        logger.debug(cars)
+        logger.info(cars)
         return cars
