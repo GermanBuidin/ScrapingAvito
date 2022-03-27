@@ -10,7 +10,6 @@ class Logging:
         handler_stream.setFormatter(logging.Formatter(fmt='[%(asctime)s: %(levelname)s] - %(message)s'))
         handler_stream.setLevel(logging.DEBUG)
         logger.addHandler(handler_stream)
-        logger.info('logger was initialized')
 
 
 Logging().logger_init('processing')
