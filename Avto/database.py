@@ -41,9 +41,9 @@ class Database:
     def create_table(self):
         self.cursor.execute(self.CREATE)
 
-    def insert_car_info(self, car_info: list):
+    def insert_car_info(self, car_info: list, page_size: int = 10):
         try:
-            psycopg2.extras.execute_batch(self.cursor, self.INSERT, car_info)
+            psycopg2.extras.execute_batch(self.cursor, self.INSERT, car_info, page_size = page_size)
             logger.info("Record inserted successfully")
         except Exception as err:
             logger.exception(err)
