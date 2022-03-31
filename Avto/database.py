@@ -47,3 +47,4 @@ class Database:
             logger.info("Record inserted successfully")
         except Exception as err:
             logger.exception(err)
+
